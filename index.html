@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Santa</title>
+    <!-- Incluye Vue.js 3 desde el CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        h1 {
+            text-shadow: 2px 2px 4px #27c42cf1;
+        }
+
+        h2, h3, h4, h5, h6, p {
+            margin: 0;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100%;
+            overflow: auto;
+        }
+
+        #app {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            width: 50%;
+            height: 25%;
+        }
+
+        .step h4 {
+            text-shadow: 2px 2px 4px #c42727f1;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #name-selector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        #name-selector select {
+            width: 100%;
+        }
+
+        #btn-suprise {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            font-weight: 700;
+        }
+
+        #btn-suprise:hover {
+            translate: 2px 2px;
+            box-shadow: -2px -2px rgba(0, 0, 0, 0.5);
+        }
+
+        #btn-suprise:active {
+            translate: 0px 0px;
+            box-shadow: none;
+        }
+
+        #snowflakes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+        }
+
+        .snowflake {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #fff;
+            border-radius: 50%;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <h1>¡Juego de Secret Santa!</h1>
+    <div v-if="participants.length > 0">
+        <h2>Participantes</h2>
+        <ul>
+            <li v-for="participant in participants" :key="participant.id">{{ participant.name }}</li>
+        </ul>
+        <button @click="shuffle">¡Repartir regalos!</button>
+        <h2>Resultados</h2>
+        <ul>
+            <li v-for="result in results" :key="result.id">
+                {{ result.giver.name }} ➡ {{ result.receiver.name }}
+            </li>
+        </ul>
+    </div>
+    <div>
+        <label for="participantsInput">Ingresa los participantes (separados por comas):</label>
+        <input type="text" id="participantsInput" v-model="participantsInput">
+        <button @click="addParticipants">Agregar participantes</button>
+    </div>
+</div>
+
+<div id="snowflakes"></div>
+
+<script>
+    const app = Vue.createApp({
+        data() {
+            return {
+                participants: [],
+                participantsInput: '',
+                results: []
+            };
+        },
+        methods: {
+            addParticipants() {
+                const names = this.participantsInput.split(',').map(name => name.trim());
+                names.forEach(name => {
+                    if (name) {
+                        this.participants.push({ id: Date.now(), name });
+                    }
+                });
+                this.participantsInput = '';
+            },
+            shuffle() {
+                // Algoritmo para asignar destinatarios de manera aleatoria
+                const shuffledParticipants = [...this.participants];
+                for (let i = shuffledParticipants.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffledParticipants[i], shuffledParticipants[j]] = [shuffledParticipants[j], shuffledParticipants[i]];
+                }
+
+                // Asignar destinatarios
+                this.results = shuffledParticipants.map((giver, index) => ({
+                    id: giver.id,
+                    giver,
+                    receiver: shuffledParticipants[(index + 1) % shuffledParticipants.length]
+                }));
+            }
+        }
+    });
+
+    app.mount('#app');
+
+    // Función para crear copos de nieve de forma aleatoria
+    function createSnowflake() {
+        const snowflake = document.createElement('div');
+        snowflake.className = 'snowflake';
+        snowflake.style.left = Math.random() * 100 + 'vw';
+        document.getElementById('snowflakes').appendChild(snowflake);
+        setTimeout(() => {
+            snowflake.remove();
+        }, 10000);  // Elimina el copo después de 10 segundos
+    }
+
+    // Función para crear varios copos a la vez
+    function createSnowflakes(quantity) {
+        for (let i = 0; i < quantity; i++) {
+            createSnowflake();
+        }
+    }
+
+    // Llama a la función para crear copos al cargar la página
+    window.onload = function () {
+        createSnowflakes(10); // Cambia la cantidad según tus preferencias
+        setInterval(() => {
+            createSnowflakes(5); // Crea más copos cada 5 segundos
+        }, 5000);
+    };
+</script>
+
+</body>
+</html>
